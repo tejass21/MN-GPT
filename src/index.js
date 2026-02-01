@@ -256,6 +256,7 @@ function createWindow() {
     width: 1100,
     height: 720,
     title: "MN-GPT",
+    alwaysOnTop: true, // Keep it visible even when clicking elsewhere
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -264,6 +265,9 @@ function createWindow() {
       // so Ctrl + +/- and Ctrl + wheel behave like ChatGPT
     }
   });
+
+  // Keep visible on all workspaces/desktops
+  mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
 
