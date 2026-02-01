@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MN-GPT</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo-row">
+        <div class="logo-icon">MN</div>
+        <div>
+          <div class="brand-name">MN-GPT</div>
+          <div class="brand-tagline">MN-AI Desktop Assistant</div>
+        </div>
+      </div>
+
+      <button class="new-chat-btn" id="new-chat-btn">+ New chat</button>
+
+      <nav class="menu">
+        <div class="menu-section">Workspace</div>
+        <button class="menu-item active">Chat</button>
+        <button class="menu-item">History</button>
+        <button class="menu-item">Settings</button>
+      </nav>
+    </aside>
+
+    <main class="chat-panel">
+      <header class="chat-header">
+        <div>
+          <div class="chat-title">MN-GPT</div>
+          <div class="chat-subtitle">ChatGPT-style chat with MN-AI styling</div>
+        </div>
+      </header>
+
+      <section class="chat-window" id="chat-window"></section>
+
+      <footer class="chat-input-row">
+        <textarea id="user-input" rows="1"
+          placeholder="Ask MN-GPT anything..."></textarea>
+        <button id="send-btn">➤</button>
+      </footer>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

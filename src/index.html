@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>MN-GPT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- Floating toggle when sidebar collapsed -->
+    <button id="sidebar-fab" class="sidebar-toggle-fab" title="Open menu">
+      ☰
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div>
+          <div class="app-title">MN-GPT</div>
+          <div class="app-subtitle">MN-AI Desktop Assistant</div>
+        </div>
+        <button id="sidebar-toggle" class="sidebar-toggle-btn" title="Collapse sidebar">
+          ☰
+        </button>
+      </div>
+
+      <button id="new-chat-btn" class="primary-btn">+ New chat</button>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">WORKSPACE</div>
+        <button id="nav-chat" class="nav-item nav-item-active">
+          Chat
+        </button>
+        <button id="nav-history" class="nav-item">History</button>
+        <button id="nav-settings" class="nav-item">Settings</button>
+
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-panel">
+      <!-- CHAT -->
+      <section id="panel-chat" class="panel panel-active">
+        <header class="panel-header"
+          style="display: flex; justify-content: center; align-items: center; position: relative;">
+          <h1>MN-GPT</h1>
+          <button id="stealth-btn" class="icon-btn"
+            style="position: absolute; right: 0; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"
+            title="Toggle Stealth Mode (Invisible to Zoom)">
+            👁️
+          </button>
+        </header>
+
+        <!-- Chat messages -->
+        <div id="chat-window" class="chat-window"></div>
+
+        <!-- Input bar -->
+        <div class="input-bar">
+          <!-- hidden file input stays -->
+          <input type="file" id="image-input" accept="image/*" hidden />
+
+          <!-- Attachment menu trigger -->
+          <button id="attachment-trigger" class="icon-btn" title="Add photos & tools">
+            +
+          </button>
+
+          <!-- Attachment menu (ChatGPT-like) -->
+          <div id="attachment-menu" class="attachment-menu hidden">
+            <button class="attachment-item" id="menu-add-photo">
+              <span class="attachment-icon">🗂️</span>
+              <span class="attachment-text">
+                <span class="attachment-title">Add photo</span>
+                <span class="attachment-sub">Upload from your computer</span>
+              </span>
+            </button>
+
+            <button class="attachment-item" id="menu-take-photo">
+              <span class="attachment-icon">📷</span>
+              <span class="attachment-text">
+                <span class="attachment-title">Take photo</span>
+                <span class="attachment-sub">Use your camera</span>
+              </span>
+            </button>
+
+            <button class="attachment-item" id="menu-screenshot">
+              <span class="attachment-icon">🖥️</span>
+              <span class="attachment-text">
+                <span class="attachment-title">Screenshot</span>
+                <span class="attachment-sub">Capture your screen</span>
+              </span>
+            </button>
+          </div>
+
+          <!-- Textarea input -->
+          <textarea id="user-input" rows="1" placeholder="Ask MN-GPT anything..."></textarea>
+
+          <!-- Mic button -->
+          <button id="screenshot-btn" class="icon-btn" title="Take screenshot">
+            🎤
+          </button>
+
+          <!-- Send button -->
+          <button id="send-btn" class="send-btn" title="Send">
+            ▶
+          </button>
+        </div>
+
+        <!-- Hidden camera preview -->
+        <video id="camera-preview" autoplay playsinline hidden></video>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="panel-history" class="panel">
+        <header class="panel-header">
+          <h1>History</h1>
+          <p>Conversation history will appear here.</p>
+        </header>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="panel-settings" class="panel">
+        <div class="settings-shell">
+          <!-- Settings Header -->
+          <div class="settings-header">
+            <button class="settings-close-btn" id="close-settings">✕</button>
+            <h1 class="settings-main-title">Settings</h1>
+          </div>
+
+          <!-- Settings Container -->
+          <div class="settings-container">
+            <!-- Sidebar Navigation -->
+            <aside class="settings-nav">
+              <button class="settings-tab settings-tab-active" data-tab="general">
+                ⚙️ General
+              </button>
+              <button class="settings-tab" data-tab="appearance">
+                🎨 Appearance
+              </button>
+              <button class="settings-tab" data-tab="personalization">
+                👤 Personalization
+              </button>
+              <button class="settings-tab" data-tab="data">
+                🗑️ Data controls
+              </button>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="settings-content">
+              <!-- GENERAL TAB -->
+              <div class="settings-page settings-page-active" id="settings-general">
+                <div class="settings-section">
+                  <h2 class="settings-section-title">General</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Show timestamps</div>
+                      <div class="setting-description">Display time next to each message</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="setting-show-timestamps" checked />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Window</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Window Transparency</div>
+                      <div class="setting-description">Adjust window opacity to see behind</div>
+                    </div>
+                    <div class="transparency-control">
+                      <input type="range" id="setting-transparency" min="30" max="100" value="100"
+                        class="transparency-slider" />
+                      <span id="transparency-value">100%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- APPEARANCE TAB -->
+              <div class="settings-page" id="settings-appearance">
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Appearance</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Theme</div>
+                      <div class="setting-description">Choose your preferred theme</div>
+                    </div>
+                    <select id="setting-theme" class="settings-select">
+                      <option value="dark">Dark</option>
+                      <option value="light">Light</option>
+                      <option value="system">System</option>
+                    </select>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Accent Color</div>
+                      <div class="setting-description">Customize the accent color</div>
+                    </div>
+                    <select class="settings-select">
+                      <option>Purple (Default)</option>
+                      <option>Blue</option>
+                      <option>Green</option>
+                      <option>Pink</option>
+                    </select>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Message Bubble Style</div>
+                      <div class="setting-description">How messages are displayed</div>
+                    </div>
+                    <select class="settings-select">
+                      <option>Standard</option>
+                      <option>Compact</option>
+                      <option>Spacious</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PERSONALIZATION TAB -->
+              <div class="settings-page" id="settings-personalization">
+                <div class="settings-section">
+                  <h2 class="settings-section-title">AI Model</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Model</div>
+                      <div class="setting-description">Select which AI model to use</div>
+                    </div>
+                    <select id="setting-model" class="settings-select">
+                      <option value="gpt-4o-mini" selected>GPT-4O Mini</option>
+                      <option value="gpt-4">GPT-4</option>
+                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Interview Settings</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Interview Role</div>
+                      <div class="setting-description">Choose your professional role</div>
+                    </div>
+                    <select id="interview-role-select" class="settings-select">
+                      <option value="">None</option>
+                      <option value="data-eng">Data Engineer</option>
+                      <option value="dev">Software Developer</option>
+                      <option value="analyst">Data Analyst</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">System Prompt</h2>
+                  <div class="setting-item vertical">
+                    <div class="setting-info">
+                      <div class="setting-label">Custom Interview Prompt</div>
+                      <div class="setting-description">
+                        Define how the AI should behave during interview prep. Include your role, experience level, and
+                        response style.
+                      </div>
+                      <div class="prompt-instructions">
+                        <p><strong>📋 Instructions:</strong></p>
+                        <ul>
+                          <li><strong>Who you are:</strong> "I am a Data Engineer with 5+ years of experience"</li>
+                          <li><strong>Interview style:</strong> "Answer in spoken English, like talking to a colleague"
+                          </li>
+                          <li><strong>Answer format:</strong> "Give direct answer first (1-2 lines), then practical
+                            explanation (3-5 lines)"</li>
+                          <li><strong>Content type:</strong> "Include real project examples and technical details"</li>
+                          <li><strong>What to avoid:</strong> "No textbook definitions, no marketing language, no long
+                            paragraphs"</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <textarea id="setting-system-prompt" class="settings-textarea" rows="10"
+                      placeholder="Example: You are a Data Engineer with 5+ years of experience. Answer interview questions in simple spoken English. Format: 1) Direct answer (1-2 lines), 2) Practical explanation with project examples (3-5 lines). Sound natural and confident, like talking to a colleague. Avoid textbook definitions and marketing language."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DATA CONTROLS TAB -->
+              <div class="settings-page" id="settings-data">
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Improve MN-GPT</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Improve the model for everyone</div>
+                      <div class="setting-description">Help improve MN-GPT by sharing conversation data</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="setting-improve-model" checked />
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Chat Management</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Shared Chats</div>
+                      <div class="setting-description">Manage your shared conversation links</div>
+                    </div>
+                    <button class="btn-manage" id="manage-shared-btn">Manage</button>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Archived Chats</div>
+                      <div class="setting-description">View and manage your archived conversations</div>
+                    </div>
+                    <button class="btn-manage" id="manage-archived-btn">Manage</button>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Archive All Chats</div>
+                      <div class="setting-description">Move all conversations to archive</div>
+                    </div>
+                    <button class="btn-secondary" id="archive-all-btn">Archive all</button>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Data & Privacy</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Delete All Chats</div>
+                      <div class="setting-description">Permanently remove all conversation history</div>
+                    </div>
+                    <button class="btn-danger" id="clear-history-btn">Delete all</button>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Export Data</div>
+                      <div class="setting-description">Download your conversation data</div>
+                    </div>
+                    <button class="btn-manage" id="export-data-btn">Export</button>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Application Info</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Version</div>
+                      <div class="setting-description">Current app version</div>
+                    </div>
+                    <span class="setting-value">1.0.0</span>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">About</div>
+                      <div class="setting-description">MN-GPT Interview Assistant</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+
+</html>
