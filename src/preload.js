@@ -19,6 +19,10 @@ contextBridge.exposeInMainWorld("mnApi", {
   // ADMIN
   openAdmin: () => ipcRenderer.invoke("mn-gpt:open-admin"),
 
+  // AUDIO
+  sendAudioChunk: (base64Data) => ipcRenderer.invoke("mn-gpt:audio-chunk", base64Data),
+  onTranscriptionResult: (callback) => ipcRenderer.on('transcription-result', (_event, text) => callback(text)),
+
   // SHORTCUT LISTENERS
   onShortcut: (callback) => ipcRenderer.on('shortcut-event', (_event, action) => callback(action)),
   onClickThroughToggled: (callback) => ipcRenderer.on('click-through-toggled', (_event, enabled) => callback(enabled))

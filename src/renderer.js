@@ -870,3 +870,121 @@ if (window.mnApi && window.mnApi.onClickThroughToggled) {
     }
   });
 }
+
+// ================== AUDIO CAPTURE ==================
+const SAMPLE_RATE = 24000;
+const AUDIO_CHUNK_DURATION = 0.05; // 50ms chunks
+const BUFFER_SIZE = 2048;
+let isAudioPaused = false;
+let isMicActive = false;
+let micAudioProcessor = null;
+let audioCtx = null;
+let micStreamSource = null;
+
+const micBtn = document.getElementById("mic-btn");
+
+async function startMicCapture() {
+  try {
+    micStreamSource = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        sampleRate: SAMPLE_RATE,
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+      video: false,
+    });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
+    const source = audioCtx.createMediaStreamSource(micStreamSource);
+    const processor = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+    const samplesPerChunk = Math.floor(SAMPLE_RATE * AUDIO_CHUNK_DURATION);
+    let currentChunk = new Float32Array(samplesPerChunk);
+    let currentChunkIndex = 0;
+
+    processor.onaudioprocess = (e) => {
+      if (isAudioPaused || !isMicActive) return;
+      const inputData = e.inputBuffer.getChannelData(0);
+      for (let i = 0; i < inputData.length; i++) {
+        if (currentChunkIndex < samplesPerChunk) {
+          currentChunk[currentChunkIndex++] = inputData[i];
+        }
+        if (currentChunkIndex >= samplesPerChunk) {
+          // Convert Float32 to Int16 PCM
+          const pcmData16 = new Int16Array(currentChunk.length);
+          for (let j = 0; j < currentChunk.length; j++) {
+            const s = Math.max(-1, Math.min(1, currentChunk[j]));
+            pcmData16[j] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+          // Convert to Base64 and send via IPC
+          const base64Data = btoa(String.fromCharCode(...new Uint8Array(pcmData16.buffer)));
+          window.mnApi.sendAudioChunk(base64Data);
+          currentChunkIndex = 0;
+        }
+      }
+    };
+    source.connect(processor);
+    processor.connect(audioCtx.destination);
+    micAudioProcessor = processor;
+    isMicActive = true;
+    updateMicUI();
+  } catch (err) {
+    console.error('Mic capture failed:', err);
+    alert('Failed to access microphone. Please check permissions.');
+  }
+}
+
+function stopMicCapture() {
+  isMicActive = false;
+  if (micAudioProcessor) {
+    micAudioProcessor.disconnect();
+    micAudioProcessor = null;
+  }
+  if (audioCtx) {
+    audioCtx.close().catch(console.error);
+    audioCtx = null;
+  }
+  if (micStreamSource) {
+    micStreamSource.getTracks().forEach(track => track.stop());
+    micStreamSource = null;
+  }
+  updateMicUI();
+}
+
+function updateMicUI() {
+  if (micBtn) {
+    if (isMicActive) {
+      micBtn.classList.add("mic-active");
+      micBtn.style.color = "#10b981"; // Green when active
+      micBtn.title = "Turn Off Microphone";
+    } else {
+      micBtn.classList.remove("mic-active");
+      micBtn.style.color = "";
+      micBtn.title = "Turn On Microphone";
+    }
+  }
+}
+
+if (micBtn) {
+  micBtn.onclick = () => {
+    if (isMicActive) {
+      stopMicCapture();
+    } else {
+      startMicCapture();
+    }
+  };
+}
+
+// Handle transcription results
+if (window.mnApi && window.mnApi.onTranscriptionResult) {
+  window.mnApi.onTranscriptionResult((text) => {
+    if (text && text.trim()) {
+      if (userInput) {
+        userInput.value = text;
+        userInput.focus();
+        // Auto-trigger send
+        handleSend();
+      }
+    }
+  });
+}

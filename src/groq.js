@@ -1,9 +1,10 @@
 const https = require('https');
 const { BrowserWindow, ipcMain } = require('electron');
 const { getSystemPrompt } = require('./prompts');
-const storage = require('../storage');
-const { getApiKey, getLicenseKey, setLicenseKey } = storage;
-const licenseService = require('./license');
+
+// Dummy storage/license if needed for external compatibility
+const storage = { getApiKey: () => '', getLicenseKey: () => '', setLicenseKey: () => { } };
+const licenseService = { incrementUsageCount: () => { } };
 
 // Global state
 let audioBuffer = Buffer.alloc(0);
@@ -222,12 +223,11 @@ async function processAudio() {
         sendToRenderer('update-status', 'Analyzing...');
 
         const text = await transcribeAudio(bufferToProcess);
-        if (text && text.trim().length > 3) {
+        if (text && text.trim()) {
             console.log('[Groq] Transcribed:', text);
-            sendToRenderer('update-status', 'Thinking...');
+            sendToRenderer('transcription-result', text);
+            // Trigger chat response automatically
             await getGroqChatResponse(text);
-            licenseService.incrementUsageCount();
-            sendToRenderer('update-status', 'Ready');
         } else {
             console.log('[Groq] No clear speech found in buffer.');
             sendToRenderer('update-status', 'Ready');
@@ -271,28 +271,13 @@ function setupGroqIpcHandlers() {
         currentCustomPrompt = customPrompt;
         currentResumeContent = resumeContent;
 
-        // Sync with gemini.js for chatbox context
-        try {
-            const geminiUtils = require('./gemini');
-            if (geminiUtils.updateSessionContext) {
-                geminiUtils.updateSessionContext(profile, customPrompt, resumeContent);
-            }
-        } catch (e) {
-            console.error('Error syncing context to gemini.js:', e);
-        }
-
         initializeNewSession(profile, customPrompt);
         sendToRenderer('update-status', 'Ready');
         return { success: true };
     });
 
-    ipcMain.handle('send-audio-content', async (event, { data }) => {
-        handleAudioData(data);
-        return { success: true };
-    });
-
-    ipcMain.handle('send-mic-audio-content', async (event, { data }) => {
-        handleAudioData(data);
+    ipcMain.handle('mn-gpt:audio-chunk', async (event, base64Data) => {
+        handleAudioData(base64Data);
         return { success: true };
     });
 }

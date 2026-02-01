@@ -9,6 +9,10 @@ const {
   globalShortcut
 } = require("electron");
 const path = require("path");
+const { setupGroqIpcHandlers } = require("./groq");
+
+// Initialize Groq handlers
+setupGroqIpcHandlers();
 
 // ================== LOG ==================
 console.log("✅ MN-GPT MAIN PROCESS LOADED");
