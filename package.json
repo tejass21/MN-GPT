@@ -8,7 +8,8 @@
     "start": "electron-forge start",
     "make": "electron-forge make",
     "package": "electron-forge package",
-    "publish": "electron-forge publish"
+    "publish": "electron-forge publish",
+    "admin:keygen": "node admin/keygen.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

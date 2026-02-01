@@ -36,6 +36,7 @@ const keybinds = {
   scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
   scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
   emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
+  openAdmin: isMac ? 'Cmd+Shift+G' : 'Ctrl+Shift+G',
 };
 
 function registerShortcuts(mainWindow, keybinds) {
@@ -115,6 +116,11 @@ function registerShortcuts(mainWindow, keybinds) {
 
   globalShortcut.register("CommandOrControl+0", () => {
     mainWindow.webContents.setZoomLevel(0);
+  });
+
+  // 7. Admin Panel
+  globalShortcut.register(keybinds.openAdmin, () => {
+    createAdminWindow();
   });
 }
 
@@ -250,6 +256,11 @@ ipcMain.handle("mn-gpt:quit-app", () => {
   app.quit();
 });
 
+// ================== IPC: OPEN ADMIN ==================
+ipcMain.handle("mn-gpt:open-admin", () => {
+  createAdminWindow();
+});
+
 // ================== WINDOW ==================
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -301,6 +312,22 @@ function createWindow() {
   }
 
   return mainWindow;
+}
+
+function createAdminWindow() {
+  const adminWindow = new BrowserWindow({
+    width: 450,
+    height: 700,
+    title: "DesireAI Admin",
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false // Since it's an internal admin tool, simplifying here
+    }
+  });
+
+  adminWindow.loadFile(path.join(__dirname, "../admin/index.html"));
+  adminWindow.setMenu(null);
+  return adminWindow;
 }
 
 // ================== APP LIFECYCLE ==================

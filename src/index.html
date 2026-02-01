@@ -10,6 +10,33 @@
 
 <body>
   <div class="app-shell">
+    <!-- Mandatory License Lock Screen -->
+    <div id="license-lock-screen" style="display: none;">
+      <div class="lock-card">
+        <div class="lock-logo">💎</div>
+        <h1 class="lock-title">MN-GPT Activation</h1>
+        <p class="lock-subtitle">Please activate your premium license to continue.</p>
+
+        <div class="lock-device-box">
+          <span
+            style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Your
+            Device ID</span>
+          <span id="lock-device-id" class="lock-device-id">Loading...</span>
+        </div>
+
+        <div class="lock-input-group">
+          <label for="lock-license-key">License Key</label>
+          <input type="text" id="lock-license-key" class="lock-input" placeholder="XXXX-XXXX-XXXX-XXXX">
+        </div>
+
+        <button id="lock-activate-btn" class="lock-btn">Activate Now</button>
+
+        <div class="lock-footer">
+          Don't have a key? <a href="#">Contact Support</a>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating toggle when sidebar collapsed -->
     <button id="sidebar-fab" class="sidebar-toggle-fab" title="Open menu">
       ☰
@@ -147,6 +174,9 @@
               </button>
               <button class="settings-tab" data-tab="shortcuts">
                 ⌨️ Shortcuts
+              </button>
+              <button class="settings-tab" data-tab="license">
+                🔑 License
               </button>
             </aside>
 
@@ -360,6 +390,19 @@
                 </div>
 
                 <div class="settings-section">
+                  <h2 class="settings-section-title">Master Reset</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Clear All App Data</div>
+                      <div class="setting-description" style="color: #f87171;">WARNING: This will delete everything,
+                        including your license. The app will restart as if new.</div>
+                    </div>
+                    <button class="btn-danger" id="master-reset-btn">Reset All</button>
+                  </div>
+                </div>
+
+                <div class="settings-section">
                   <h2 class="settings-section-title">Application Info</h2>
 
                   <div class="setting-item">
@@ -442,6 +485,45 @@
                       <span class="shortcut-label">Next Response</span>
                       <span class="shortcut-key">Ctrl + ]</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LICENSE TAB -->
+              <div class="settings-page" id="settings-license">
+                <div class="settings-section">
+                  <h2 class="settings-section-title">License Activation</h2>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Device ID</div>
+                      <div class="setting-description">Use this ID to generate your license key</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <span id="display-device-id" class="setting-value"
+                        style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">Loading...</span>
+                      <button class="btn-manage" id="copy-device-id-btn"
+                        style="padding: 4px 8px; font-size: 0.8rem;">Copy</button>
+                    </div>
+                  </div>
+
+                  <div class="setting-item vertical">
+                    <div class="setting-info">
+                      <div class="setting-label">License Key</div>
+                      <div class="setting-description">Enter your premium license key below</div>
+                    </div>
+                    <input type="text" id="license-key-input" class="settings-textarea"
+                      style="margin-top: 12px; height: auto;" placeholder="XXXX-XXXX-XXXX-XXXX" />
+                    <button class="primary-btn" id="activate-license-btn"
+                      style="margin-top: 16px; max-width: 200px;">Activate License</button>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Status</div>
+                      <div class="setting-description">Current activation status</div>
+                    </div>
+                    <span id="license-status" class="setting-value" style="color: #ef4444;">Not Activated</span>
                   </div>
                 </div>
               </div>

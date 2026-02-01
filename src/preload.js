@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld("mnApi", {
   // QUIT APP
   quitApp: () => ipcRenderer.invoke("mn-gpt:quit-app"),
 
+  // ADMIN
+  openAdmin: () => ipcRenderer.invoke("mn-gpt:open-admin"),
+
   // SHORTCUT LISTENERS
   onShortcut: (callback) => ipcRenderer.on('shortcut-event', (_event, action) => callback(action)),
   onClickThroughToggled: (callback) => ipcRenderer.on('click-through-toggled', (_event, enabled) => callback(enabled))

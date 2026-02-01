@@ -969,3 +969,129 @@ body {
   border: 1px solid rgba(178, 108, 255, 0.3);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+/* ================= LICENSE LOCK SCREEN ================= */
+#license-lock-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-main);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.lock-card {
+  background: #111827;
+  border-radius: 24px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 450px;
+  border: 1px solid rgba(178, 108, 255, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(178, 108, 255, 0.2);
+  text-align: center;
+}
+
+.lock-logo {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.lock-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #fff 0%, #b26cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lock-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+.lock-device-box {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  margin-bottom: 1.5rem;
+}
+
+.lock-device-id {
+  font-family: 'SF Mono', 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--accent);
+  word-break: break-all;
+  margin-top: 4px;
+  display: block;
+}
+
+.lock-input-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.lock-input-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  margin-left: 4px;
+}
+
+.lock-input {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.lock-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(178, 108, 255, 0.2);
+}
+
+.lock-btn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #b26cff, #8d52ff);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(178, 108, 255, 0.3);
+}
+
+.lock-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(178, 108, 255, 0.4);
+}
+
+.lock-footer {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.lock-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lock-footer a:hover {
+  text-decoration: underline;
+}

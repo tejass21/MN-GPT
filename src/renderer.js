@@ -139,7 +139,7 @@ TONE: Confident, experienced, practical, natural. Like talking to a colleague, n
 
 
 const appSettings = {
-  model: "gpt-4.1-mini"
+  model: "gpt-4o-mini"
 };
 
 function buildSystemMessage() {
@@ -243,9 +243,15 @@ function removeAttachmentPreview() {
 
 // ================== SEND ==================
 async function handleSend() {
+  console.log("handleSend triggered");
+  if (!userInput) {
+    console.error("userInput element not found");
+    return;
+  }
   const text = userInput.value.trim();
   if (!text && !pendingAttachment) return;
 
+  console.log("Sending message:", text);
   userInput.value = "";
   addMessage(text || "[Image sent]", "user");
 
@@ -257,12 +263,14 @@ async function handleSend() {
   const loading = addLoading();
 
   try {
+    console.log("Calling mnApi.chat...");
     const res = await window.mnApi.chat({
       model: appSettings.model,
       messages,
       image: pendingAttachment
     });
 
+    console.log("Chat response received:", res);
     removeLoading(loading);
 
     if (!res || !res.ok) {
@@ -273,6 +281,7 @@ async function handleSend() {
     addMessage(res.reply, "assistant");
     messages.push({ role: "assistant", content: res.reply });
   } catch (err) {
+    console.error("Error in handleSend:", err);
     removeLoading(loading);
     addMessage("Error: " + err.message);
   }
@@ -396,19 +405,23 @@ if (screenshotBtn) {
 }
 
 // ================== EVENTS ==================
-sendBtn.onclick = handleSend;
+if (sendBtn) {
+  sendBtn.onclick = handleSend;
+}
 
-userInput.onkeydown = (e) => {
-  if (e.key === "Enter" && e.ctrlKey) {
-    // Ctrl+Enter: Take screenshot and analyze
-    e.preventDefault();
-    handleScreenshotAnalysis();
-  } else if (e.key === "Enter") {
-    // Enter: Normal send
-    e.preventDefault();
-    handleSend();
-  }
-};
+if (userInput) {
+  userInput.onkeydown = (e) => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      // Ctrl+Enter: Take screenshot and analyze
+      e.preventDefault();
+      handleScreenshotAnalysis();
+    } else if (e.key === "Enter") {
+      // Enter: Normal send
+      e.preventDefault();
+      handleSend();
+    }
+  };
+}
 
 newChatBtn.onclick = () => {
   messages = [{ role: "system", content: buildSystemMessage() }];
@@ -635,6 +648,218 @@ if (window.mnApi && window.mnApi.onShortcut) {
     }
   });
 }
+
+// ================== LICENSE MANAGEMENT ==================
+const SECRET_KEY = 'DESIER_AI_PREMIUM_LICENSE_SECRET_KEY_V1';
+
+function getDeviceId() {
+  let deviceId = localStorage.getItem("device-id");
+  if (!deviceId) {
+    // Generate a reasonably unique ID if none exists
+    deviceId = 'MN-' + Math.random().toString(36).substring(2, 10).toUpperCase() +
+      '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    localStorage.setItem("device-id", deviceId);
+  }
+  return deviceId;
+}
+
+// SHA256 + HMAC implementation (Ported for independent usage)
+var sha256 = function sha256(ascii) {
+  function rightRotate(value, amount) { return (value >>> amount) | (value << (32 - amount)); };
+  var mathPow = Math.pow;
+  var maxWord = mathPow(2, 32);
+  var result = '';
+  var words = [];
+  var asciiBitLength = ascii.length * 8;
+  var i, j;
+  var k = sha256.k = sha256.k || [];
+  var primeCounter = k.length;
+  var isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = 0; i < 313; i += candidate) { isComposite[i] = candidate; }
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+
+  // INITIAL HASH VALUES must be reset on every call
+  var hash = [];
+  var primeCounter2 = 0;
+  var isComposite2 = {};
+  for (var candidate = 2; primeCounter2 < 8; candidate++) {
+    if (!isComposite2[candidate]) {
+      for (i = 0; i < 313; i += candidate) { isComposite2[i] = candidate; }
+      hash[primeCounter2++] = (mathPow(candidate, .5) * maxWord) | 0;
+    }
+  }
+
+  ascii += '\x80';
+  while (ascii.length % 64 - 56) ascii += '\x00';
+  for (i = 0; i < ascii.length; i++) {
+    j = ascii.charCodeAt(i);
+    if (j >> 8) return;
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words.length] = ((asciiBitLength / maxWord) | 0);
+  words[words.length] = (asciiBitLength);
+  for (j = 0; j < words.length;) {
+    var w = words.slice(j, j += 16);
+    var oldHash = hash;
+    hash = hash.slice(0, 8);
+    for (i = 0; i < 64; i++) {
+      var i2 = i + j;
+      var w15 = w[i - 15], w2 = w[i - 2];
+      var a = hash[0], e = hash[4];
+      var temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+      var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (i = 0; i < 8; i++) { hash[i] = (hash[i] + oldHash[i]) | 0; }
+  }
+  for (i = 0; i < 8; i++) {
+    for (j = 3; j + 1; j--) {
+      var b = (hash[i] >> (j * 8)) & 255;
+      result += ((b < 16) ? 0 : '') + b.toString(16);
+    }
+  }
+  return result;
+};
+
+function hmacSha256(key, message) {
+  var b = 64;
+  if (key.length > b) key = hexToAscii(sha256(key));
+  while (key.length < b) key += '\x00';
+  var ipad = '', opad = '';
+  for (var i = 0; i < b; i++) {
+    ipad += String.fromCharCode(key.charCodeAt(i) ^ 0x36);
+    opad += String.fromCharCode(key.charCodeAt(i) ^ 0x5c);
+  }
+  return sha256(opad + hexToAscii(sha256(ipad + message)));
+}
+
+function hexToAscii(hex) {
+  var str = '';
+  for (var i = 0; i < hex.length; i += 2) {
+    str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+  }
+  return str;
+}
+
+function verifyLicenseKey(key) {
+  if (!key) return false;
+  const cleanKey = key.replace(/-/g, '').toUpperCase();
+  if (cleanKey.length !== 16) return false;
+
+  const prefix = cleanKey.substring(0, 4);
+  const type = cleanKey.substring(4, 5);
+  const signature = cleanKey.substring(5);
+
+  const deviceId = getDeviceId();
+  const expectedData = deviceId + prefix + type;
+  const expectedHash = hmacSha256(SECRET_KEY, expectedData);
+  const expectedSignature = expectedHash.substring(0, 11).toUpperCase();
+
+  if (signature !== expectedSignature) return false;
+
+  // Check expiration
+  if (prefix !== 'FFFF') {
+    const epoch = new Date('2024-01-01T00:00:00Z');
+    const expirationDays = parseInt(prefix, 16);
+    const expirationDate = new Date(epoch.getTime() + expirationDays * 24 * 60 * 60 * 1000);
+    if (new Date() > expirationDate) return false;
+  }
+
+  return true;
+}
+
+function updateLicenseUI() {
+  const deviceId = getDeviceId();
+  const displayIdElem = document.getElementById("display-device-id");
+  if (displayIdElem) displayIdElem.textContent = deviceId;
+
+  const lockIdElem = document.getElementById("lock-device-id");
+  if (lockIdElem) lockIdElem.textContent = deviceId;
+
+  const savedKey = localStorage.getItem("license-key");
+  const isActivated = verifyLicenseKey(savedKey);
+  const statusElem = document.getElementById("license-status");
+
+  const lockScreen = document.getElementById("license-lock-screen");
+
+  if (isActivated) {
+    if (statusElem) {
+      statusElem.textContent = "Activated (Premium)";
+      statusElem.style.color = "#10b981";
+    }
+    if (lockScreen) lockScreen.style.display = "none";
+  } else {
+    if (statusElem) {
+      statusElem.textContent = "Not Activated";
+      statusElem.style.color = "#ef4444";
+    }
+    if (lockScreen) lockScreen.style.display = "flex";
+  }
+
+  const keyInput = document.getElementById("license-key-input");
+  if (keyInput && savedKey) keyInput.value = savedKey;
+}
+
+// License event listeners
+const copyIdBtn = document.getElementById("copy-device-id-btn");
+if (copyIdBtn) {
+  copyIdBtn.onclick = () => {
+    const id = getDeviceId();
+    navigator.clipboard.writeText(id).then(() => {
+      copyIdBtn.textContent = "Copied!";
+      setTimeout(() => copyIdBtn.textContent = "Copy", 2000);
+    });
+  };
+}
+
+const activateBtn = document.getElementById("activate-license-btn");
+if (activateBtn) {
+  activateBtn.onclick = () => {
+    const key = document.getElementById("license-key-input").value.trim();
+    if (verifyLicenseKey(key)) {
+      localStorage.setItem("license-key", key);
+      updateLicenseUI();
+      alert("Application successfully activated!");
+    } else {
+      alert("Invalid or expired license key.");
+    }
+  };
+}
+
+const lockActivateBtn = document.getElementById("lock-activate-btn");
+if (lockActivateBtn) {
+  lockActivateBtn.onclick = () => {
+    const key = document.getElementById("lock-license-key").value.trim();
+    if (verifyLicenseKey(key)) {
+      localStorage.setItem("license-key", key);
+      updateLicenseUI();
+      alert("Application successfully activated!");
+    } else {
+      alert("Invalid or expired license key.");
+    }
+  };
+}
+
+const masterResetBtn = document.getElementById("master-reset-btn");
+if (masterResetBtn) {
+  masterResetBtn.onclick = () => {
+    if (confirm("CRITICAL WARNING: This will delete ALL your data, including your license and settings. The app will restart as a fresh installation. Are you sure?")) {
+      localStorage.clear();
+      alert("Data cleared. The app will now close. Please restart it manually.");
+      if (window.mnApi && window.mnApi.quitApp) {
+        window.mnApi.quitApp();
+      }
+    }
+  };
+}
+
+// Initialize license on load
+updateLicenseUI();
 
 if (window.mnApi && window.mnApi.onClickThroughToggled) {
   window.mnApi.onClickThroughToggled((enabled) => {
