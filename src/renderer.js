@@ -15,6 +15,7 @@ const cameraPreview = document.getElementById("camera-preview");
 const addPhotoBtn = document.getElementById("menu-add-photo");
 const cameraBtn = document.getElementById("menu-take-photo");
 const screenshotBtn = document.getElementById("menu-screenshot");
+const listeningIndicator = document.getElementById("listening-indicator");
 
 // sidebar + navigation
 const appShell = document.querySelector(".app-shell");
@@ -956,11 +957,15 @@ function updateMicUI() {
     if (isMicActive) {
       micBtn.classList.add("mic-active");
       micBtn.style.color = "#10b981"; // Green when active
+      micBtn.textContent = "⏹️"; // Stop icon
       micBtn.title = "Turn Off Microphone";
+      if (listeningIndicator) listeningIndicator.classList.remove("hidden");
     } else {
       micBtn.classList.remove("mic-active");
       micBtn.style.color = "";
+      micBtn.textContent = "🎤"; // Mic icon
       micBtn.title = "Turn On Microphone";
+      if (listeningIndicator) listeningIndicator.classList.add("hidden");
     }
   }
 }

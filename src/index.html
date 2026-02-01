@@ -85,54 +85,60 @@
         <div id="chat-window" class="chat-window"></div>
 
         <!-- Input bar -->
-        <div class="input-bar">
-          <!-- hidden file input stays -->
-          <input type="file" id="image-input" accept="image/*" hidden />
+        <div class="input-bar-container" style="width: 100%; max-width: 700px; position: relative;">
+          <div id="listening-indicator" class="listening-indicator hidden">
+            <span class="pulse-dot"></span>
+            Listening...
+          </div>
+          <div class="input-bar">
+            <!-- hidden file input stays -->
+            <input type="file" id="image-input" accept="image/*" hidden />
 
-          <!-- Attachment menu trigger -->
-          <button id="attachment-trigger" class="icon-btn" title="Add photos & tools">
-            +
-          </button>
-
-          <!-- Attachment menu (ChatGPT-like) -->
-          <div id="attachment-menu" class="attachment-menu hidden">
-            <button class="attachment-item" id="menu-add-photo">
-              <span class="attachment-icon">🗂️</span>
-              <span class="attachment-text">
-                <span class="attachment-title">Add photo</span>
-                <span class="attachment-sub">Upload from your computer</span>
-              </span>
+            <!-- Attachment menu trigger -->
+            <button id="attachment-trigger" class="icon-btn" title="Add photos & tools">
+              +
             </button>
 
-            <button class="attachment-item" id="menu-take-photo">
-              <span class="attachment-icon">📷</span>
-              <span class="attachment-text">
-                <span class="attachment-title">Take photo</span>
-                <span class="attachment-sub">Use your camera</span>
-              </span>
+            <!-- Attachment menu (ChatGPT-like) -->
+            <div id="attachment-menu" class="attachment-menu hidden">
+              <button class="attachment-item" id="menu-add-photo">
+                <span class="attachment-icon">🗂️</span>
+                <span class="attachment-text">
+                  <span class="attachment-title">Add photo</span>
+                  <span class="attachment-sub">Upload from your computer</span>
+                </span>
+              </button>
+
+              <button class="attachment-item" id="menu-take-photo">
+                <span class="attachment-icon">📷</span>
+                <span class="attachment-text">
+                  <span class="attachment-title">Take photo</span>
+                  <span class="attachment-sub">Use your camera</span>
+                </span>
+              </button>
+
+              <button class="attachment-item" id="menu-screenshot">
+                <span class="attachment-icon">🖥️</span>
+                <span class="attachment-text">
+                  <span class="attachment-title">Screenshot</span>
+                  <span class="attachment-sub">Capture your screen</span>
+                </span>
+              </button>
+            </div>
+
+            <!-- Textarea input -->
+            <textarea id="user-input" rows="1" placeholder="Ask MN-GPT anything..."></textarea>
+
+            <!-- Mic button -->
+            <button id="mic-btn" class="icon-btn" title="Toggle Microphone">
+              🎤
             </button>
 
-            <button class="attachment-item" id="menu-screenshot">
-              <span class="attachment-icon">🖥️</span>
-              <span class="attachment-text">
-                <span class="attachment-title">Screenshot</span>
-                <span class="attachment-sub">Capture your screen</span>
-              </span>
+            <!-- Send button -->
+            <button id="send-btn" class="send-btn" title="Send">
+              ▶
             </button>
           </div>
-
-          <!-- Textarea input -->
-          <textarea id="user-input" rows="1" placeholder="Ask MN-GPT anything..."></textarea>
-
-          <!-- Mic button -->
-          <button id="mic-btn" class="icon-btn" title="Toggle Microphone">
-            🎤
-          </button>
-
-          <!-- Send button -->
-          <button id="send-btn" class="send-btn" title="Send">
-            ▶
-          </button>
         </div>
 
         <!-- Hidden camera preview -->
