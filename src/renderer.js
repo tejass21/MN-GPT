@@ -605,3 +605,43 @@ if (improveModelToggle) {
     localStorage.setItem("improve-model", e.target.checked ? "true" : "false");
   });
 }
+
+// ================== GLOBAL SHORTCUT HANDLERS ==================
+if (window.mnApi && window.mnApi.onShortcut) {
+  window.mnApi.onShortcut((action) => {
+    console.log("Global shortcut received:", action);
+    switch (action) {
+      case 'nextStep':
+        handleScreenshotAnalysis();
+        break;
+      case 'scrollUp':
+        chatWindow.scrollBy({ top: -200, behavior: 'smooth' });
+        break;
+      case 'scrollDown':
+        chatWindow.scrollBy({ top: 200, behavior: 'smooth' });
+        break;
+      case 'previousResponse':
+        // Optional: Scroll to previous assistant message
+        const assistantMsgs = document.querySelectorAll('.message-bubble.bot');
+        if (assistantMsgs.length > 0) {
+          // Logic could be improved to find the one above current viewport
+          assistantMsgs[0].scrollIntoView({ behavior: 'smooth' });
+        }
+        break;
+      case 'nextResponse':
+        // Optional: Scroll to next assistant message
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        break;
+    }
+  });
+}
+
+if (window.mnApi && window.mnApi.onClickThroughToggled) {
+  window.mnApi.onClickThroughToggled((enabled) => {
+    console.log("Click-through toggled:", enabled);
+    if (enabled) {
+      document.body.style.border = "2px solid var(--accent)";
+      setTimeout(() => document.body.style.border = "none", 1000);
+    }
+  });
+}

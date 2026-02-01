@@ -14,5 +14,9 @@ contextBridge.exposeInMainWorld("mnApi", {
   setContentProtection: (enabled) => ipcRenderer.invoke("mn-gpt:update-content-protection", enabled),
 
   // QUIT APP
-  quitApp: () => ipcRenderer.invoke("mn-gpt:quit-app")
+  quitApp: () => ipcRenderer.invoke("mn-gpt:quit-app"),
+
+  // SHORTCUT LISTENERS
+  onShortcut: (callback) => ipcRenderer.on('shortcut-event', (_event, action) => callback(action)),
+  onClickThroughToggled: (callback) => ipcRenderer.on('click-through-toggled', (_event, enabled) => callback(enabled))
 });

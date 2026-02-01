@@ -21,6 +21,103 @@ if (require("electron-squirrel-startup")) {
 // ================== API KEY ==================
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
+// ================== KEY SHORTCUTS ==================
+const isMac = process.platform === 'darwin';
+const keybinds = {
+  moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
+  moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
+  moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
+  moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
+  toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
+  toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
+  nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
+  previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
+  nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
+  scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
+  scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
+  emergencyErase: isMac ? 'Cmd+Shift+E' : 'Ctrl+Shift+E',
+};
+
+function registerShortcuts(mainWindow, keybinds) {
+  // 1. Window Movement
+  const moveIncrement = 50; // pixels
+  const movementActions = {
+    moveUp: () => {
+      const [x, y] = mainWindow.getPosition();
+      mainWindow.setPosition(x, y - moveIncrement);
+    },
+    moveDown: () => {
+      const [x, y] = mainWindow.getPosition();
+      mainWindow.setPosition(x, y + moveIncrement);
+    },
+    moveLeft: () => {
+      const [x, y] = mainWindow.getPosition();
+      mainWindow.setPosition(x - moveIncrement, y);
+    },
+    moveRight: () => {
+      const [x, y] = mainWindow.getPosition();
+      mainWindow.setPosition(x + moveIncrement, y);
+    }
+  };
+
+  Object.keys(movementActions).forEach(action => {
+    if (keybinds[action]) {
+      globalShortcut.register(keybinds[action], movementActions[action]);
+    }
+  });
+
+  // 2. Visibility Toggle
+  globalShortcut.register(keybinds.toggleVisibility, () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+    }
+  });
+
+  // 3. Click-Through Toggle
+  let mouseEventsIgnored = false;
+  globalShortcut.register(keybinds.toggleClickThrough, () => {
+    mouseEventsIgnored = !mouseEventsIgnored;
+    mainWindow.setIgnoreMouseEvents(mouseEventsIgnored, { forward: true });
+    mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
+  });
+
+  // 4. Renderer Actions
+  const rendererActions = [
+    'nextStep', 'previousResponse', 'nextResponse', 'scrollUp', 'scrollDown'
+  ];
+
+  rendererActions.forEach(action => {
+    if (keybinds[action]) {
+      globalShortcut.register(keybinds[action], () => {
+        mainWindow.webContents.send('shortcut-event', action);
+      });
+    }
+  });
+
+  // 5. Emergency Erase / Quit
+  globalShortcut.register(keybinds.emergencyErase, () => {
+    mainWindow.hide();
+    app.quit();
+  });
+
+  // 6. Zoom Shortcuts (Consolidated)
+  globalShortcut.register("CommandOrControl+=", () => {
+    const level = mainWindow.webContents.getZoomLevel();
+    mainWindow.webContents.setZoomLevel(level + 0.5);
+  });
+
+  globalShortcut.register("CommandOrControl+-", () => {
+    const level = mainWindow.webContents.getZoomLevel();
+    mainWindow.webContents.setZoomLevel(level - 0.5);
+  });
+
+  globalShortcut.register("CommandOrControl+0", () => {
+    mainWindow.webContents.setZoomLevel(0);
+  });
+}
+
 console.log(
   "OPENAI KEY:",
   OPENAI_API_KEY ? OPENAI_API_KEY.slice(0, 6) + "..." : "NOT FOUND"
@@ -202,24 +299,10 @@ function createWindow() {
   return mainWindow;
 }
 
-// ================== APP LIFECYCLE + ZOOM SHORTCUTS ==================
+// ================== APP LIFECYCLE ==================
 app.whenReady().then(() => {
   const mainWindow = createWindow();
-
-  // Ctrl + = / Ctrl + - / Ctrl + 0 zoom like a browser
-  globalShortcut.register("CommandOrControl+=", () => {
-    const level = mainWindow.webContents.getZoomLevel();
-    mainWindow.webContents.setZoomLevel(level + 0.5);
-  });
-
-  globalShortcut.register("CommandOrControl+-", () => {
-    const level = mainWindow.webContents.getZoomLevel();
-    mainWindow.webContents.setZoomLevel(level - 0.5);
-  });
-
-  globalShortcut.register("CommandOrControl+0", () => {
-    mainWindow.webContents.setZoomLevel(0); // reset zoom
-  });
+  registerShortcuts(mainWindow, keybinds);
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
