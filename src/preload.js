@@ -20,10 +20,17 @@ contextBridge.exposeInMainWorld("mnApi", {
   openAdmin: () => ipcRenderer.invoke("mn-gpt:open-admin"),
 
   // AUDIO
+  getSources: () => ipcRenderer.invoke("mn-gpt:get-sources"),
   sendAudioChunk: (base64Data) => ipcRenderer.invoke("mn-gpt:audio-chunk", base64Data),
   onTranscriptionResult: (callback) => ipcRenderer.on('transcription-result', (_event, text) => callback(text)),
+  onNewResponse: (callback) => ipcRenderer.on('new-response', (_event, text) => callback(text)),
+  onUpdateResponse: (callback) => ipcRenderer.on('update-response', (_event, text) => callback(text)),
 
   // SHORTCUT LISTENERS
   onShortcut: (callback) => ipcRenderer.on('shortcut-event', (_event, action) => callback(action)),
-  onClickThroughToggled: (callback) => ipcRenderer.on('click-through-toggled', (_event, enabled) => callback(enabled))
+  onClickThroughToggled: (callback) => ipcRenderer.on('click-through-toggled', (_event, enabled) => callback(enabled)),
+
+  // RESUME
+  processResume: (data) => ipcRenderer.invoke('resume:process', data),
+  getSystemPrompt: (data) => ipcRenderer.invoke('mn-gpt:get-system-prompt', data)
 });

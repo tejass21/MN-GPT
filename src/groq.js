@@ -174,11 +174,15 @@ async function getGroqChatResponse(text) {
                     if (trimmed.startsWith('data: ')) {
                         try {
                             const json = JSON.parse(trimmed.slice(6));
-                            const content = json.choices[0]?.delta?.content || '';
-                            if (content) {
-                                fullText += content;
-                                sendToRenderer(isFirstChunk ? 'new-response' : 'update-response', fullText);
-                                isFirstChunk = false;
+                            const delta = json.choices[0]?.delta?.content || '';
+                            if (delta) {
+                                fullText += delta;
+                                if (isFirstChunk) {
+                                    sendToRenderer('new-response', delta);
+                                    isFirstChunk = false;
+                                } else {
+                                    sendToRenderer('update-response', delta);
+                                }
                             }
                         } catch (e) { }
                     }
@@ -226,8 +230,6 @@ async function processAudio() {
         if (text && text.trim()) {
             console.log('[Groq] Transcribed:', text);
             sendToRenderer('transcription-result', text);
-            // Trigger chat response automatically
-            await getGroqChatResponse(text);
         } else {
             console.log('[Groq] No clear speech found in buffer.');
             sendToRenderer('update-status', 'Ready');

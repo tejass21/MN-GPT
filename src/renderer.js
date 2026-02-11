@@ -143,20 +143,143 @@ const appSettings = {
   model: "gpt-4o-mini"
 };
 
-function buildSystemMessage() {
-  // Use custom prompt if saved, otherwise use default
-  const customPrompt = localStorage.getItem("custom-system-prompt");
+const roleSelect = document.getElementById("interview-role-select");
+if (roleSelect) {
+  const savedRole = localStorage.getItem("interview-role") || "";
+  roleSelect.value = savedRole;
+  roleSelect.addEventListener("change", () => {
+    localStorage.setItem("interview-role", roleSelect.value);
+  });
+}
+
+const audioSourceSelect = document.getElementById("audio-source-select");
+if (audioSourceSelect) {
+  const savedSource = localStorage.getItem("audio-source") || "mic";
+  audioSourceSelect.value = savedSource;
+  console.log("Initial audio source:", savedSource);
+  audioSourceSelect.addEventListener("change", () => {
+    console.log("Audio source changed to:", audioSourceSelect.value);
+    localStorage.setItem("audio-source", audioSourceSelect.value);
+    // Restart capture if active
+    if (isMicActive) {
+      console.log("Restarting capture for new source...");
+      stopMicCapture();
+      startMicCapture();
+    }
+  });
+}
+
+// ================== RESUME UPLOAD ==================
+const resumeFileInput = document.getElementById('resume-file-input');
+const uploadResumeBtn = document.getElementById('upload-resume-btn');
+const deleteResumeBtn = document.getElementById('delete-resume-btn');
+const resumeStatus = document.getElementById('resume-upload-status');
+
+function updateResumeUI() {
+  const resumeName = localStorage.getItem('resumeFileName');
+  if (resumeStatus) {
+    if (resumeName) {
+      resumeStatus.textContent = `Uploaded: ${resumeName}`;
+      resumeStatus.style.color = 'var(--accent)';
+      if (uploadResumeBtn) uploadResumeBtn.classList.add('hidden');
+      if (deleteResumeBtn) deleteResumeBtn.classList.remove('hidden');
+    } else {
+      resumeStatus.textContent = 'No resume uploaded';
+      resumeStatus.style.color = 'var(--text-muted)';
+      if (uploadResumeBtn) uploadResumeBtn.classList.remove('hidden');
+      if (deleteResumeBtn) deleteResumeBtn.classList.add('hidden');
+    }
+  }
+}
+
+if (uploadResumeBtn && resumeFileInput) {
+  uploadResumeBtn.onclick = () => resumeFileInput.click();
+
+  resumeFileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File is too large. Max 5MB.');
+      return;
+    }
+
+    if (resumeStatus) resumeStatus.textContent = 'Uploading...';
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Data = reader.result.split(',')[1]; // Remove data URL prefix
+      try {
+        const result = await window.mnApi.processResume({
+          name: file.name,
+          data: base64Data,
+          type: file.type
+        });
+
+        if (result.success) {
+          localStorage.setItem('resumeText', result.text);
+          localStorage.setItem('resumeFileName', file.name);
+          updateResumeUI();
+        } else {
+          alert('Error processing resume: ' + result.error);
+          updateResumeUI();
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to upload resume.');
+        updateResumeUI();
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset
+  };
+}
+
+if (deleteResumeBtn) {
+  deleteResumeBtn.onclick = () => {
+    localStorage.removeItem('resumeText');
+    localStorage.removeItem('resumeFileName');
+    updateResumeUI();
+  };
+}
+
+// Initial UI check
+updateResumeUI();
+
+async function buildSystemMessage() {
+  const customPrompt = localStorage.getItem("custom-system-prompt") || "";
+  const resumeContent = localStorage.getItem("resumeText") || "";
+  const profile = localStorage.getItem("interview-role") || "interview";
+
+  // If we have access to the backend prompt builder, use it
+  if (window.mnApi && window.mnApi.getSystemPrompt) {
+    return await window.mnApi.getSystemPrompt({
+      profile: profile || 'interview',
+      customPrompt,
+      resumeContent,
+      options: {
+        responseStyle: 'normal',
+        responseTone: 'professional'
+      }
+    });
+  }
+
   return customPrompt || DEFAULT_INTERVIEW_SCRIPT;
 }
 
 // ================== CHAT STATE ==================
-let messages = [{ role: "system", content: buildSystemMessage() }];
+let messages = [];
+// Initialize chat
+(async () => {
+  const sysMsg = await buildSystemMessage();
+  messages = [{ role: "system", content: sysMsg }];
+})();
 let pendingAttachment = null;
 
 // ================== UI HELPERS ==================
 function addMessage(text, sender = "assistant") {
   const row = document.createElement("div");
-  row.className = "message-row";
+  row.className = `message-row ${sender === "user" ? "user-row" : "bot-row"}`;
 
   const avatar = document.createElement("div");
   avatar.className = `message-avatar ${sender === "user" ? "user" : "bot"}`;
@@ -170,6 +293,7 @@ function addMessage(text, sender = "assistant") {
   row.appendChild(bubble);
   chatWindow.appendChild(row);
   chatWindow.scrollTop = chatWindow.scrollHeight;
+  return row;
 }
 
 function addLoading() {
@@ -243,7 +367,10 @@ function removeAttachmentPreview() {
 }
 
 // ================== SEND ==================
+let isGenerating = false;
+
 async function handleSend() {
+  if (isGenerating) return;
   console.log("handleSend triggered");
   if (!userInput) {
     console.error("userInput element not found");
@@ -251,6 +378,11 @@ async function handleSend() {
   }
   const text = userInput.value.trim();
   if (!text && !pendingAttachment) return;
+
+  isGenerating = true;
+  userInput.disabled = true;
+  sendBtn.disabled = true;
+  sendBtn.style.opacity = "0.5";
 
   console.log("Sending message:", text);
   userInput.value = "";
@@ -261,7 +393,7 @@ async function handleSend() {
     content: text || "[Image]"
   });
 
-  const loading = addLoading();
+  addLoading();
 
   try {
     console.log("Calling mnApi.chat...");
@@ -271,20 +403,25 @@ async function handleSend() {
       image: pendingAttachment
     });
 
-    console.log("Chat response received:", res);
-    removeLoading(loading);
-
+    console.log("Chat response completed:", res);
     if (!res || !res.ok) {
+      removeLoading(document.querySelector('[data-loading="1"]'));
       addMessage("Error: " + (res?.error || "Unknown error"));
-      return;
+    } else {
+      messages.push({ role: "assistant", content: res.reply });
     }
-
-    addMessage(res.reply, "assistant");
-    messages.push({ role: "assistant", content: res.reply });
   } catch (err) {
     console.error("Error in handleSend:", err);
-    removeLoading(loading);
+    removeLoading(document.querySelector('[data-loading="1"]'));
     addMessage("Error: " + err.message);
+  } finally {
+    isGenerating = false;
+    if (userInput) userInput.disabled = false;
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.style.opacity = "1";
+    }
+    if (userInput) userInput.focus();
   }
 
   pendingAttachment = null;
@@ -293,6 +430,11 @@ async function handleSend() {
 
 // ================== SCREENSHOT ANALYSIS (Ctrl+Enter) ==================
 async function handleScreenshotAnalysis() {
+  if (isGenerating) return;
+  isGenerating = true;
+  userInput.disabled = true;
+  sendBtn.disabled = true;
+
   try {
     // Take screenshot
     const screenshot = await window.mnApi.takeScreenshot();
@@ -318,19 +460,23 @@ async function handleScreenshotAnalysis() {
 
     if (!res || !res.ok) {
       addMessage("Error: " + (res?.error || "Unknown error"));
-      return;
+    } else {
+      // Update full message history for context
+      messages.push({
+        role: "user",
+        content: "[Screenshot analyzed]"
+      });
+
+      // Assistant response is now added via the streaming listeners
+      messages.push({ role: "assistant", content: res.reply });
     }
-
-    // Update full message history for context
-    messages.push({
-      role: "user",
-      content: "[Screenshot analyzed]"
-    });
-
-    addMessage(res.reply, "assistant");
-    messages.push({ role: "assistant", content: res.reply });
   } catch (err) {
     addMessage("Error taking screenshot: " + err.message);
+  } finally {
+    isGenerating = false;
+    userInput.disabled = false;
+    sendBtn.disabled = false;
+    userInput.focus();
   }
 }
 
@@ -424,8 +570,9 @@ if (userInput) {
   };
 }
 
-newChatBtn.onclick = () => {
-  messages = [{ role: "system", content: buildSystemMessage() }];
+newChatBtn.onclick = async () => {
+  const sysMsg = await buildSystemMessage();
+  messages = [{ role: "system", content: sysMsg }];
   chatWindow.innerHTML = "";
   addMessage("Hi, I'm MN-GPT. Ask interview questions.", "assistant");
 };
@@ -617,6 +764,51 @@ if (improveModelToggle) {
 
   improveModelToggle.addEventListener("change", (e) => {
     localStorage.setItem("improve-model", e.target.checked ? "true" : "false");
+  });
+}
+
+// ================== STREAMING LISTENERS ==================
+let currentBotMessageRow = null;
+let scrollTimeout = null;
+
+function scrollToBottomThrottled() {
+  if (scrollTimeout) return;
+  scrollTimeout = requestAnimationFrame(() => {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    scrollTimeout = null;
+  });
+}
+
+if (window.mnApi && window.mnApi.onNewResponse) {
+  window.mnApi.onNewResponse((delta) => {
+    console.log("New streamed response started");
+    removeLoading(document.querySelector('[data-loading="1"]'));
+    currentBotMessageRow = addMessage(delta, "assistant");
+    scrollToBottomThrottled();
+  });
+}
+
+if (window.mnApi && window.mnApi.onUpdateResponse) {
+  window.mnApi.onUpdateResponse((delta) => {
+    if (currentBotMessageRow) {
+      const bubble = currentBotMessageRow.querySelector(".message-bubble");
+      if (bubble) {
+        bubble.textContent += delta;
+        scrollToBottomThrottled();
+      }
+    }
+  });
+}
+
+if (window.mnApi && window.mnApi.onTranscriptionResult) {
+  window.mnApi.onTranscriptionResult((text) => {
+    if (text && text.trim() && !isGenerating) {
+      if (userInput) {
+        userInput.value = text;
+        userInput.focus();
+        handleSend();
+      }
+    }
   });
 }
 
@@ -886,16 +1078,58 @@ const micBtn = document.getElementById("mic-btn");
 
 async function startMicCapture() {
   try {
-    micStreamSource = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        sampleRate: SAMPLE_RATE,
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      },
-      video: false,
-    });
+    const audioSource = localStorage.getItem("audio-source") || "mic";
+    console.log("Starting capture with source:", audioSource);
+
+    if (audioSource === "system") {
+      console.log("Attempting system audio capture...");
+      const sources = await window.mnApi.getSources();
+      console.log("Available desktop sources:", sources);
+      // On Windows, the primary screen usually has the system audio. 
+      // We'll look for the first screen source.
+      const screenSource = sources.find(s => s.id.startsWith('screen:'));
+      console.log("Selected screen source:", screenSource);
+
+      if (!screenSource) {
+        throw new Error("No screen source found for system audio.");
+      }
+
+      micStreamSource = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          mandatory: {
+            chromeMediaSource: 'desktop'
+          }
+        },
+        video: {
+          mandatory: {
+            chromeMediaSource: 'desktop',
+            chromeMediaSourceId: screenSource.id
+          }
+        }
+      });
+
+      console.log("System audio stream captured:", micStreamSource.getAudioTracks().length, "audio tracks found.");
+      micStreamSource.getAudioTracks().forEach(t => console.log("Audio track:", t.label, "Enabled:", t.enabled));
+
+      // Stop the video track as we only need audio
+      micStreamSource.getVideoTracks().forEach(track => {
+        console.log("Stopping video track:", track.label);
+        track.stop();
+      });
+    } else {
+      // Standard Microphone Capture
+      micStreamSource = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: SAMPLE_RATE,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
+    }
+
     audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
     const source = audioCtx.createMediaStreamSource(micStreamSource);
     const processor = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
@@ -930,8 +1164,8 @@ async function startMicCapture() {
     isMicActive = true;
     updateMicUI();
   } catch (err) {
-    console.error('Mic capture failed:', err);
-    alert('Failed to access microphone. Please check permissions.');
+    console.error('Audio capture failed:', err);
+    alert('Failed to access audio source. ' + err.message);
   }
 }
 
@@ -980,16 +1214,3 @@ if (micBtn) {
   };
 }
 
-// Handle transcription results
-if (window.mnApi && window.mnApi.onTranscriptionResult) {
-  window.mnApi.onTranscriptionResult((text) => {
-    if (text && text.trim()) {
-      if (userInput) {
-        userInput.value = text;
-        userInput.focus();
-        // Auto-trigger send
-        handleSend();
-      }
-    }
-  });
-}

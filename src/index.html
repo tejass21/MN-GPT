@@ -289,6 +289,17 @@
 
                   <div class="setting-item">
                     <div class="setting-info">
+                      <div class="setting-label">Audio Source</div>
+                      <div class="setting-description">Listen to yourself or the interviewer</div>
+                    </div>
+                    <select id="audio-source-select" class="settings-select">
+                      <option value="mic">Microphone (You)</option>
+                      <option value="system">Interviewer (System Audio)</option>
+                    </select>
+                  </div>
+
+                  <div class="setting-item">
+                    <div class="setting-info">
                       <div class="setting-label">Interview Role</div>
                       <div class="setting-description">Choose your professional role</div>
                     </div>
@@ -298,6 +309,27 @@
                       <option value="dev">Software Developer</option>
                       <option value="analyst">Data Analyst</option>
                     </select>
+                  </div>
+                </div>
+
+                <div class="settings-section">
+                  <h2 class="settings-section-title">Resume Context</h2>
+                  <div class="setting-item">
+                    <div class="setting-info">
+                      <div class="setting-label">Upload Resume</div>
+                      <div class="setting-description">
+                        Upload your resume (PDF/Text) to personalize AI responses.
+                      </div>
+                      <div id="resume-upload-status"
+                        style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">
+                        No resume uploaded
+                      </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                      <input type="file" id="resume-file-input" accept=".pdf,.txt,.md,.rtf" hidden />
+                      <button class="btn-manage" id="upload-resume-btn">Upload</button>
+                      <button class="btn-danger hidden" id="delete-resume-btn" title="Remove Resume">✕</button>
+                    </div>
                   </div>
                 </div>
 
