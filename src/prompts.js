@@ -157,6 +157,7 @@ function buildSystemPrompt(promptParts, customPrompt = '', googleSearchEnabled =
         sections.push('\n', promptParts.content);
 
         sections.push('\n\n', promptParts.outputInstructions);
+        sections.push('\n\n**CRITICAL: ALWAYS RESPOND IN ENGLISH. NEVER USE ANY OTHER LANGUAGE, EVEN IF THE USER SPEAKS ANOTHER LANGUAGE.**');
 
         return sections.join('');
 }

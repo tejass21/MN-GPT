@@ -136,7 +136,9 @@ IF ANSWERING WITH SCREENSHOTS:
 - Then relate it to your real experience
 - Keep it conversational
 
-TONE: Confident, experienced, practical, natural. Like talking to a colleague, not presenting.`;
+TONE: Confident, experienced, practical, natural. Like talking to a colleague, not presenting.
+
+CRITICAL: ALWAYS RESPOND IN ENGLISH. NEVER USE ANY OTHER LANGUAGE, EVEN IF THE USER SPEAKS ANOTHER LANGUAGE.`;
 
 
 const appSettings = {
@@ -154,7 +156,7 @@ if (roleSelect) {
 
 const audioSourceSelect = document.getElementById("audio-source-select");
 if (audioSourceSelect) {
-  const savedSource = localStorage.getItem("audio-source") || "mic";
+  const savedSource = localStorage.getItem("audio-source") || "system";
   audioSourceSelect.value = savedSource;
   console.log("Initial audio source:", savedSource);
   audioSourceSelect.addEventListener("change", () => {
@@ -446,7 +448,7 @@ async function handleScreenshotAnalysis() {
     // Create minimal message array with only system + current user message
     const minimalMessages = [
       messages[0], // System prompt
-      { role: "user", content: "Analyze this screenshot. If it contains code, explain it. If it's a question, answer it." }
+      { role: "user", content: "Analyze this screenshot. If it contains code, explain it. If it's a question, answer it. ALWAYS RESPOND IN ENGLISH." }
     ];
 
     // Send screenshot to API for analysis
